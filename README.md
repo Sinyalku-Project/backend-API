@@ -40,13 +40,12 @@ pip install -r requirements.txt
 
 ### 3. Database Setup
 
-#### Create PostgreSQL Database with PostGIS
+#### 1. Go to SQL in Supabase dashboard
 ```bash
-createdb sinyalku_db
-psql -d sinyalku_db -c "CREATE EXTENSION postgis;"
+CREATE EXTENSION IF NOT EXISTS postgis;
 ```
 
-#### Initialize Alembic (first time only)
+#### 2. Initialize Alembic (first time only) at Root Directory
 ```bash
 alembic init alembic
 ```
@@ -66,17 +65,17 @@ alembic upgrade head
 ---
 
 ### 4. Environment Variables
-Create a `.env` file in the `backend-API/` directory:
+Create a `.env` file in the root directory:
 ```env
-DATABASE_URL=postgresql://postgres:[YOUR-PASSWORD]@db.pivszfvaxkupwsilprri.supabase.co:5432/postgres
-SECRET_KEY=your-secret-key-here
+DATABASE_URL=postgresql://postgres:[YOUR-PASSWORD]@db.[YOUR-PROJECT-ID].supabase.co:5432/postgres
+SECRET_KEY=[make-your-secret-key-here]
 ```
 
 ---
 
-### 5. Run Development Server
+### 5. Run Command
 ```bash
-uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
+uvicorn app.main:app --reload --host 0.0.0.0 --port $PORT
 ```
 
 ---
@@ -118,3 +117,6 @@ uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
 - `timestamp`: DateTime
 - `user_id`: Integer (Foreign Key → User)
 - `geom`: Geometry(Point, SRID=4326)
+
+## Notes
+This project is still under development!!!

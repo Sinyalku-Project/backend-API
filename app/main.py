@@ -34,7 +34,7 @@ _CACHE_TTL = 60 * 60 * 24  # 24 hours
 
 @app.get("/")
 def root():
-    return {"message": "SinyalKu API (revised)"}
+    return {"message": "SinyalKu backend API is running!"}
 
 
 @app.post("/token", response_model=Token)

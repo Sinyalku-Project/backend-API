@@ -7,6 +7,7 @@ FastAPI backend for the **SinyalKu** crowdsourced network quality monitoring pla
 ## Project Structure
 ```
 backend-API/
+├── alembic/
 ├── app/
 │   ├── __init__.py
 │   ├── main.py              # FastAPI application & endpoints
@@ -14,7 +15,8 @@ backend-API/
 │   ├── schemas.py           # Pydantic schemas
 │   ├── auth.py              # JWT authentication utilities
 │   └── database.py          # Database connection setup
-└── requirements.txt         # Python dependencies
+├── requirements.txt         # Python dependencies
+└── alembic.ini         
 ```
 
 ---
@@ -66,7 +68,7 @@ alembic upgrade head
 ### 4. Environment Variables
 Create a `.env` file in the `backend-API/` directory:
 ```env
-DATABASE_URL=postgresql://<user>:<password>@localhost/sinyalku_db
+DATABASE_URL=postgresql://postgres:[YOUR-PASSWORD]@db.pivszfvaxkupwsilprri.supabase.co:5432/postgres
 SECRET_KEY=your-secret-key-here
 ```
 

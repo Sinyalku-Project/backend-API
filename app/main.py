@@ -1,11 +1,9 @@
-# main.py
 from fastapi import FastAPI, Depends, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
 from typing import List, Optional
 import requests
 import time
 
-# Your project imports (keep these if present in your project)
 from app.database import get_db
 from app.models import SignalReading as SignalReadingModel, User as UserModel
 from app.schemas import (
@@ -15,7 +13,8 @@ from app.schemas import (
     User as UserSchema,
     Token,
 )
-from app.auth import authenticate_user, create_access_token, get_current_active_user
+from app.auth import authenticate_user, create_access_token, get_current_active_user, get_password_hash
+from sqlalchemy.orm import Session
 
 app = FastAPI(title="SinyalKu API (revised)")
 
@@ -37,6 +36,29 @@ def root():
     return {"message": "SinyalKu backend API is running!"}
 
 
+@app.post("/register", response_model=UserSchema)
+def register(user: UserCreate, db: Session = Depends(get_db)):
+    # Check existing user
+    existing = db.query(UserModel).filter(
+        (UserModel.username == user.username) |
+        (UserModel.email == user.email)
+    ).first()
+    if existing:
+        raise HTTPException(status_code=400, detail="Username or email already exists")
+
+    # Create new user
+    hashed_pw = get_password_hash(user.password)
+    new_user = UserModel(
+        username=user.username,
+        email=user.email,
+        hashed_password=hashed_pw,
+        is_active=True
+    )
+    db.add(new_user)
+    db.commit()
+    db.refresh(new_user)
+    return new_user
+
 @app.post("/token", response_model=Token)
 def token_endpoint(form_data: dict, db=Depends(get_db)):
     user = authenticate_user(db, form_data.get("username"), form_data.get("password"))
@@ -46,17 +68,47 @@ def token_endpoint(form_data: dict, db=Depends(get_db)):
     return {"access_token": access_token, "token_type": "bearer"}
 
 
+# ✅ Reverse geocoding helper
+def reverse_geocode_country(lat: float, lon: float) -> Optional[str]:
+    now = time.time()
+    cache_key = f"{lat:.4f},{lon:.4f}"
+    cached = _GEO_CACHE.get(cache_key)
+    if cached and now - cached["ts"] < _CACHE_TTL:
+        return cached["data"]
+
+    url = "https://nominatim.openstreetmap.org/reverse"
+    params = {"lat": lat, "lon": lon, "format": "json"}
+    headers = {"User-Agent": "SinyalKu/1.0 (contact@example.com)"}  # replace contact
+
+    try:
+        resp = requests.get(url, params=params, headers=headers, timeout=12)
+        if resp.status_code == 429:
+            raise HTTPException(status_code=429, detail="Nominatim rate limit exceeded")
+        resp.raise_for_status()
+        data = resp.json()
+        country = data.get("address", {}).get("country")
+        _GEO_CACHE[cache_key] = {"ts": now, "data": country}
+        return country
+    except requests.RequestException:
+        return None
+
 @app.post("/api/readings/", response_model=SignalReadingSchema)
 def create_reading(
     reading: SignalReadingCreate,
     current_user: UserModel = Depends(get_current_active_user),
     db=Depends(get_db),
 ):
+    # ✅ If country is missing, get it from lat/lon
+    country_name = reading.country
+    if not country_name:
+        country_name = reverse_geocode_country(reading.latitude, reading.longitude)
+
     db_r = SignalReadingModel(
         latitude=reading.latitude,
         longitude=reading.longitude,
         signal_strength=reading.signal_strength,
         operator=reading.operator,
+        country=country_name,
         user_id=current_user.id,
     )
     db.add(db_r)
@@ -146,7 +198,6 @@ def geocode_country(country: str = Query(..., min_length=1)):
     try:
         resp = requests.get(url, params=params, headers=headers, timeout=12)
     except requests.RequestException as e:
-        # upstream request failed (network/timeouts)
         raise HTTPException(status_code=502, detail=f"Nominatim request failed: {str(e)}")
 
     if resp.status_code == 429:

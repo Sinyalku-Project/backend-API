@@ -7,8 +7,15 @@ from passlib.context import CryptContext
 from sqlalchemy.orm import Session
 from app.database import get_db
 from app.models import User
+import os
+from dotenv import load_dotenv
 
-SECRET_KEY = "your-secret-key-here-change-in-production"
+load_dotenv() 
+
+SECRET_KEY = os.getenv("SECRET_KEY")
+if not SECRET_KEY:
+    raise ValueError("SECRET_KEY is not set in environment variables.")
+
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 30
 

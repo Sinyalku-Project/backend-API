@@ -9,7 +9,6 @@ load_dotenv()
 
 # PostgreSQL connection string (required)
 DATABASE_URL = os.getenv("DATABASE_URL")
-
 if not DATABASE_URL:
     raise ValueError("DATABASE_URL is not set in the environment variables")
 

@@ -11,3 +11,4 @@ alembic
 requests
 psycopg2
 geoalchemy2
+shapely

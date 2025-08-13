@@ -75,6 +75,8 @@ from app import models
 target_metadata = models.Base.metadata
 ```
 
+Edit `alembic.ini` and replace the sqlalchemy.url with supabase database URL.
+
 Run the migrations to create database tables:
 
 ```bash

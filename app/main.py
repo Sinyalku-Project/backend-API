@@ -20,7 +20,7 @@ app = FastAPI(title="SinyalKu API (revised)")
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # adjust for production
+    allow_origins=["https://sinyalku.netlify.app/", "http://localhost:3000"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
